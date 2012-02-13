@@ -116,7 +116,11 @@ function serifJs(container, options){
   function play(){
     if(!timer){
       next();
-      write(container.children[nextSerifNum].childNodes[0], 0);
+      var node = container.children[nextSerifNum].childNodes[0];
+      if(node.nodeType == 3){
+        ticker = prevSerif.appendChild(ticker);
+      }
+      write(node, 0);
     }else if(pauseFlg){
       pauseFlg = false;
       write(pause[0], pause[1]);
