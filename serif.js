@@ -8,7 +8,7 @@ function serifJs(container, options){
       tickRate = options.tickRate || 500,
       ticker = document.createElement("span");
 
-  ticker.className = "serifjs_ticker";
+  ticker.className = options.tickerClass || "serifjs_ticker";
 
   for(i=0,l=container.children.length;i<l;i++){
     container.children[i].style.display = "none";
