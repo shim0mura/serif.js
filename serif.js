@@ -17,6 +17,9 @@ function serifJs(container, options){
   function setSerif(){
     prevSerif = container.children[nextSerifNum].cloneNode(false);
     prevSerif.style.display = "";
+    if(options.serifClass){
+      prevSerif.className = options.serifClass;
+    }
     container.appendChild(prevSerif);
   }
 
