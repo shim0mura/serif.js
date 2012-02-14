@@ -80,15 +80,7 @@ function serifJs(container, options){
         break;
       case "traceParent":
         index = 0;
-        var par = node.parentNode;
-        while(!nextNode){
-          nextNode = par.nextSibling;
-          cloneStack.shift();
-          par = par.parentNode;
-        }
-        if(cloneStack.length > 0){
-          cloneStack[0].appendChild(ticker);
-        }
+        nextNode = traceNode(node.parentNode);
         break;
       case "appendElement":
         var copy = node.cloneNode(false);
@@ -96,7 +88,12 @@ function serifJs(container, options){
         cloneStack[0].appendChild(copy);
         cloneStack.unshift(copy);
         index = 0;
-        nextNode = node.childNodes[0];
+        if(node.childNodes.length > 0){
+          nextNode = node.childNodes[0];
+        }else{
+          index = 0;
+          nextNode = traceNode(node);
+        }
         break;
     }
     
@@ -110,6 +107,19 @@ function serifJs(container, options){
       options.callback && options.callback();
       setTimeout(tick, tickRate);
       timer = null;
+    }
+
+    function traceNode(n){
+      var next = null
+      while(!next){
+        next = n.nextSibling;
+        cloneStack.shift();
+        n = n.parentNode;
+      }
+      if(cloneStack.length > 0){
+        cloneStack[0].appendChild(ticker);
+      }
+      return next;
     }
   }
 
