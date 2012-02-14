@@ -13,6 +13,7 @@ function serifJs(container, options){
   for(i=0,l=container.children.length;i<l;i++){
     container.children[i].style.display = "none";
   }
+  container.style.overflow = "hidden";
 
   function setSerif(){
     prevSerif = container.children[nextSerifNum].cloneNode(false);
