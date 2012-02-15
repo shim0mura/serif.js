@@ -105,9 +105,9 @@ function serifJs(container, options){
         write(nextNode, index);
       }, rate);
     }else{
-      options.callback && options.callback();
       setTimeout(tick, tickRate);
       timer = null;
+      options.callback && options.callback();
     }
 
     function traceNode(n){
