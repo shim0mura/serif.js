@@ -150,23 +150,3 @@ function serifJs(container, options){
     stop: stop
   };
 }
-
-var a = serifJs(document.getElementById("ticker"), {
-  callback: function(){
-    //element.animate(margin-top...., function(){
-    //  a.play();
-    //})
-    //serifが切り替えアニメーションを提供はしない
-    //callbackで指定
-    //ただしアニメーションの際にdisplay:blockとなっているものはアクセスできる必要がある
-  }
-
-});
-a.play();
-
-document.getElementById("test2").addEventListener("click", function(){
-  a.play();
-}, false);
-document.getElementById("stop").addEventListener("click", function(){
-  a.stop();
-}, false);
