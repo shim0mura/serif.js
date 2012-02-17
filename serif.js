@@ -1,6 +1,12 @@
 function serifJs(container, options){
   var cloneStack = [],
-      timer = pause = prevSerif = null,
+      timer = null,
+      pause = null,
+      curSerif = null,
+      curMargin = 0,
+      thres = 0,
+      crLength = 0,
+      contHeight = 0,
       pauseFlg = false,
       nextSerifNum = -1,
       options = options || {},
@@ -8,30 +14,19 @@ function serifJs(container, options){
       tickRate = options.tickRate || 500,
       ticker = document.createElement("span");
 
-  ticker.className = options.tickerClass || "serifjs_ticker";
+  var s = container.currentStyle || document.defaultView.getComputedStyle(container, '');
+  contHeight = parseInt(s.height);
+  if(!options.threshold || !options.crLength){
+    !options.threshold && (thres = parseInt(s.height));
+    !options.crLength && (crLength = parseInt(s.fontSize));
+  }
+
+  ticker.className = options.tickerClass ||"serifjs_ticker";
 
   for(i=0,l=container.children.length;i<l;i++){
     container.children[i].style.display = "none";
   }
   container.style.overflow = "hidden";
-
-  function setSerif(){
-    prevSerif = container.children[nextSerifNum].cloneNode(false);
-    prevSerif.style.display = "";
-    if(options.serifClass){
-      prevSerif.className = options.serifClass;
-    }
-    container.appendChild(prevSerif);
-  }
-
-  function next(){
-    prevSerif && container.removeChild(prevSerif);
-    if(++nextSerifNum > container.children.length - 1){
-      nextSerifNum = 0;
-    }
-    setSerif();
-    cloneStack = [container.children[container.children.length-1]];
-  }
 
   function tick(){
     var style = ticker.style;
@@ -40,10 +35,24 @@ function serifJs(container, options){
     }else{
       style.display = "none";
     }
-    
     if(!timer){
       setTimeout(tick, tickRate);
     }
+  }
+
+  function slideSerif(margin, next){
+    var d = margin,
+        total = 0;
+    var slideTimer = setInterval(function(){
+      d = d/2;
+      total = total + d;
+      curSerif.style.marginTop = (-1*curMargin - total) + "px";
+      if(d<1){
+        curMargin = curMargin + margin;
+        clearInterval(slideTimer);
+        (next == "restart") ? restart() : play(true);
+      }
+    }, rate);
   }
   
   function checkProcess(node, index){
@@ -59,8 +68,15 @@ function serifJs(container, options){
     }else{
       process = "appendElement";
     }
-  
     return process;
+  }
+
+  function checkThres(){
+    if(parseInt(curSerif.scrollHeight) > thres + curMargin){
+      return true;
+    }else{
+      return false;
+    }
   }
 
   function write(node, index){
@@ -71,6 +87,10 @@ function serifJs(container, options){
       case "appendText":
         var text = document.createTextNode(node.nodeValue.charAt(index));
         cloneStack[0].insertBefore(text, ticker);
+        if(checkThres()){
+          stop();
+          slideSerif(crLength, "restart");
+        }
         index++;
         nextNode = node;
         break;
@@ -85,8 +105,14 @@ function serifJs(container, options){
         break;
       case "appendElement":
         var copy = node.cloneNode(false);
-        ticker = copy.appendChild(ticker);
         cloneStack[0].appendChild(copy);
+        if(String.hasOwnProperty.call(copy, "canHaveChildren")){
+          if(copy.canHaveChildren){
+            ticker = copy.appendChild(ticker);
+          }
+        }else{
+          ticker = copy.appendChild(ticker);
+        }
         cloneStack.unshift(copy);
         index = 0;
         if(node.childNodes.length > 0){
@@ -124,19 +150,39 @@ function serifJs(container, options){
     }
   }
 
-  function play(){
-    if(!timer){
-      next();
+  function play(isSlide){
+    if(!curSerif || isSlide){
+
+      curSerif && container.removeChild(curSerif);
+      curMargin = 0;
+      if(nextSerifNum+1 > container.children.length - 1){
+        //todo:loop
+        //nextSerifNum = 0;
+        return;
+      }else{
+        nextSerifNum++;
+      }
+      curSerif = container.children[nextSerifNum].cloneNode(false);
+      curSerif.style.display = "";
+      curSerif.className = options.serifClass ? options.serifClass : "";
+      container.appendChild(curSerif);
+      cloneStack = [container.children[container.children.length-1]];
+
       var node = container.children[nextSerifNum].childNodes[0];
       if(node.nodeType == 3){
-        ticker = prevSerif.appendChild(ticker);
+        ticker = curSerif.appendChild(ticker);
       }
       write(node, 0);
-    }else if(pauseFlg){
-      pauseFlg = false;
-      write(pause[0], pause[1]);
-      pause = null;
+    }else{
+      slideSerif(contHeight);
     }
+  }
+
+  function restart(){
+    pauseFlg = false;
+    var p0 = pause[0], p1 = pause[1];
+    pause = null;
+    write(p0, p1);
   }
 
   function stop(){
@@ -145,28 +191,21 @@ function serifJs(container, options){
     }
   }
 
+  function getNext(){
+    return nextSerifNum;
+  }
+
+  function insertSerif(data){
+    //todo:check data (htmlelement or not).
+    data.style.display = "none";
+    curSerif && container.insertBefore(data, curSerif);
+  }
+
   return {
     play: play,
+    restart: restart,
+    current: getNext,
+    insert: insertSerif,
     stop: stop
   };
 }
-
-var a = serifJs(document.getElementById("ticker"), {
-  callback: function(){
-    //element.animate(margin-top...., function(){
-    //  a.play();
-    //})
-    //serifが切り替えアニメーションを提供はしない
-    //callbackで指定
-    //ただしアニメーションの際にdisplay:blockとなっているものはアクセスできる必要がある
-  }
-
-});
-a.play();
-
-document.getElementById("test2").addEventListener("click", function(){
-  a.play();
-}, false);
-document.getElementById("stop").addEventListener("click", function(){
-  a.stop();
-}, false);
