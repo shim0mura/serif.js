@@ -1,6 +1,6 @@
 function serifJs(container, options){
   var cloneStack = [],
-      timer = pause = prevSerif = null,
+      timer = null, pause = null, prevSerif = null,
       pauseFlg = false,
       nextSerifNum = -1,
       options = options || {},
